@@ -4,14 +4,23 @@ Django settings for sellaro_project.
 
 from pathlib import Path
 import os
+# Import environ and getenv for secure settings if using another library, 
+# but os.environ.get is reliable for Render environment variables.
 
 # Correct BASE_DIR
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-b*)5aq)@4lt@(%hr9!x^v+n%4*@72y*zlk(p6-7fyu0y-d-@uu'
-DEBUG = True
+# 1. CRITICAL SECURITY FIX: Read SECRET_KEY from Environment Variable
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.localhost']
+# 2. CRITICAL SECURITY FIX: Read DEBUG from Environment Variable
+# When DEBUG=False is set in the environment, this evaluates to False.
+DEBUG = os.environ.get('DEBUG') == 'True'
+
+# 3. CRITICAL DEPLOYMENT FIX: Set ALLOWED_HOSTS for Render
+# Use the URL sellaro.onrender.com
+ALLOWED_HOSTS = ['sellaro.onrender.com', '127.0.0.1', 'localhost']
+
 
 # settings.py
 INSTALLED_APPS = [
@@ -24,6 +33,7 @@ INSTALLED_APPS = [
     'shop_app',  # Make sure this is here
     'products',
     'store',
+    # Ensure any installed package from requirements.txt that needs to be an app is here
 ]
 
 MIDDLEWARE = [
@@ -78,10 +88,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# Static files settings
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles' # Crucial for collectstatic on Render
 
+# Media files settings
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
