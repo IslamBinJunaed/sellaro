@@ -1,0 +1,800 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nearby Stores - Sellaro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    /* Reset & variables */
+    * { 
+        margin: 0; 
+        padding: 0; 
+        box-sizing: border-box; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    }
+
+    :root {
+        --primary: #3a86ff;
+        --secondary: #8338ec;
+        --accent: #ff006e;
+        --samsung-blue: #1428a0;
+        --samsung-light: #2c5dff;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+        --shadow: 0 5px 15px rgba(0,0,0,0.1);
+        --transition: all 0.3s ease;
+    }
+
+    /* Back button */
+    .back-button { 
+        display: inline-flex; 
+        align-items: center; 
+        gap: 10px; 
+        background: var(--primary); 
+        color: white; 
+        padding: 12px 25px; 
+        border-radius: 25px; 
+        text-decoration: none; 
+        transition: var(--transition); 
+        border: 2px solid transparent; 
+        font-weight: 600; 
+        margin: 20px 0; 
+    }
+    .back-button:hover { 
+        background: white; 
+        color: var(--primary); 
+        border-color: var(--primary); 
+        transform: translateY(-2px); 
+        box-shadow: var(--shadow); 
+    }
+
+    /* Hero Section */
+    .samsung-hero { 
+        background: linear-gradient(135deg, var(--samsung-blue), var(--samsung-light)); 
+        color: white; 
+        padding: 80px 0; 
+        text-align: center; 
+        margin-bottom: 40px; 
+    }
+    .samsung-hero-content { 
+        max-width: 800px; 
+        margin: 0 auto; 
+    }
+    .samsung-logo { 
+        font-size: 4rem; 
+        margin-bottom: 20px; 
+        color: white; 
+    }
+    .samsung-hero h1 { 
+        font-size: 3.5rem; 
+        margin-bottom: 20px; 
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3); 
+    }
+    .samsung-hero p { 
+        font-size: 1.3rem; 
+        margin-bottom: 40px; 
+        opacity: 0.9; 
+    }
+
+    .cta-buttons { 
+        display: flex; 
+        justify-content: center; 
+        gap: 20px; 
+        flex-wrap: wrap; 
+    }
+    .btn { 
+        padding: 15px 35px; 
+        border: none; 
+        border-radius: 30px; 
+        font-size: 1.1rem; 
+        font-weight: 600; 
+        cursor: pointer; 
+        transition: var(--transition); 
+        display: inline-flex; 
+        align-items: center; 
+        gap: 10px; 
+        text-transform: uppercase; 
+        letter-spacing: 0.5px; 
+    }
+    .btn-primary { 
+        background: var(--accent); 
+        color: white; 
+        box-shadow: 0 5px 15px rgba(255,0,110,0.3); 
+    }
+    .btn-primary:hover { 
+        background: #e0005e; 
+        transform: translateY(-3px); 
+        box-shadow: 0 8px 20px rgba(255,0,110,0.4); 
+    }
+    .btn-secondary { 
+        background: transparent; 
+        color: white; 
+        border: 2px solid white; 
+    }
+    .btn-secondary:hover { 
+        background: white; 
+        color: var(--dark); 
+        transform: translateY(-3px); 
+    }
+
+    /* Map Section */
+    .map-section {
+        padding: 40px 0;
+    }
+    #map { 
+        width: 100%; 
+        height: 500px; 
+        border-radius: 15px; 
+        box-shadow: var(--shadow); 
+        margin-bottom: 40px;
+    }
+
+    /* Stores Section */
+    .stores-section { 
+        padding: 80px 0; 
+    }
+    .stores-controls { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: 40px; 
+        flex-wrap: wrap; 
+        gap: 20px; 
+    }
+    .stores-filter { 
+        display: flex; 
+        gap: 15px; 
+        flex-wrap: wrap; 
+    }
+    .filter-btn { 
+        padding: 10px 25px; 
+        border: 2px solid var(--samsung-blue); 
+        background: transparent; 
+        color: var(--samsung-blue); 
+        border-radius: 25px; 
+        cursor: pointer; 
+        transition: var(--transition); 
+        font-weight: 600; 
+    }
+    .filter-btn.active, .filter-btn:hover { 
+        background: var(--samsung-blue); 
+        color: white; 
+    }
+    .search-stores { 
+        position: relative; 
+        min-width: 300px; 
+    }
+    .search-stores input { 
+        width: 100%; 
+        padding: 12px 20px; 
+        border: 2px solid #e9ecef; 
+        border-radius: 25px; 
+        font-size: 1rem; 
+        transition: var(--transition); 
+    }
+    .search-stores input:focus { 
+        border-color: var(--samsung-blue); 
+        outline: none; 
+    }
+
+    .stores-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+        gap: 30px; 
+    }
+    .store-card { 
+        background: white; 
+        border-radius: 15px; 
+        padding: 30px; 
+        box-shadow: var(--shadow); 
+        transition: var(--transition); 
+        border: 1px solid rgba(0,0,0,0.05); 
+        position: relative; 
+    }
+    .store-card:hover { 
+        transform: translateY(-5px); 
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
+    }
+    .store-badge { 
+        position: absolute; 
+        top: 15px; 
+        right: 15px; 
+        background: var(--samsung-blue); 
+        color: white; 
+        padding: 5px 15px; 
+        border-radius: 20px; 
+        font-size: 0.8rem; 
+        font-weight: 600; 
+        z-index: 2; 
+    }
+    .store-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .store-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--samsung-blue), var(--samsung-light));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    .store-info h3 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        color: var(--dark);
+    }
+    .store-type {
+        color: var(--samsung-blue);
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .store-rating {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+    .store-rating .stars {
+        color: var(--warning);
+    }
+    .store-rating span {
+        color: var(--gray);
+        font-weight: 600;
+    }
+    .store-details {
+        margin-bottom: 25px;
+    }
+    .store-address {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 10px;
+        color: var(--gray);
+    }
+    .store-address i {
+        color: var(--samsung-blue);
+        margin-top: 2px;
+    }
+    .store-hours {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--gray);
+        margin-bottom: 10px;
+    }
+    .store-hours i {
+        color: var(--success);
+    }
+    .store-phone {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--gray);
+    }
+    .store-phone i {
+        color: var(--primary);
+    }
+    .store-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .store-feature {
+        background: var(--light);
+        color: var(--dark);
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .store-actions {
+        display: flex;
+        gap: 10px;
+    }
+    .store-btn {
+        flex: 1;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .store-btn.primary {
+        background: var(--samsung-blue);
+        color: white;
+    }
+    .store-btn.primary:hover {
+        background: var(--samsung-light);
+    }
+    .store-btn.secondary {
+        background: transparent;
+        color: var(--samsung-blue);
+        border: 2px solid var(--samsung-blue);
+    }
+    .store-btn.secondary:hover {
+        background: var(--samsung-blue);
+        color: white;
+    }
+
+    /* Toast Notification */
+    .toast { 
+        position: fixed; 
+        bottom: 30px; 
+        right: 30px; 
+        background: var(--success); 
+        color: white; 
+        padding: 15px 25px; 
+        border-radius: 8px; 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+        z-index: 3000; 
+        transform: translateY(100px); 
+        opacity: 0; 
+        transition: all 0.3s ease; 
+    }
+    .toast.show { 
+        transform: translateY(0); 
+        opacity: 1; 
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .samsung-hero {
+            padding: 60px 0;
+        }
+        .samsung-hero h1 {
+            font-size: 2.5rem;
+        }
+        .samsung-hero p {
+            font-size: 1.1rem;
+        }
+        .cta-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        .btn {
+            width: 100%;
+            max-width: 300px;
+            justify-content: center;
+        }
+        .stores-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .search-stores {
+            min-width: 100%;
+        }
+        .stores-grid {
+            grid-template-columns: 1fr;
+        }
+        .store-actions {
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .samsung-hero {
+            padding: 40px 0;
+        }
+        .samsung-hero h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Back Button -->
+<div class="container">
+    <a href="{% url 'home' %}" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+        Back to Home
+    </a>
+</div>
+
+<!-- Samsung Stores Hero Section -->
+<section class="samsung-hero">
+    <div class="container">
+        <div class="samsung-hero-content">
+            <div class="samsung-logo">
+                <i class="fab fa-samsung"></i>
+            </div>
+            <h1>Samsung Stores in South Korea</h1>
+            <p>Find official Samsung stores, experience zones, and service centers across South Korea. Discover the latest technology and get expert support.</p>
+            <div class="cta-buttons">
+                <button class="btn btn-primary" onclick="findNearestStore()">
+                    <i class="fas fa-location-crosshairs"></i> Find Nearest Store
+                </button>
+                <button class="btn btn-secondary" onclick="showAllStores()">
+                    <i class="fas fa-list"></i> View All Stores
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Map Section -->
+<section class="map-section">
+    <div class="container">
+        <div id="map"></div>
+    </div>
+</section>
+
+<!-- Stores Section -->
+<section class="stores-section">
+    <div class="container">
+        <div class="stores-controls">
+            <div class="stores-filter">
+                <button class="filter-btn active" onclick="filterStores('all')">All Stores</button>
+                <button class="filter-btn" onclick="filterStores('flagship')">Flagship Stores</button>
+                <button class="filter-btn" onclick="filterStores('experience')">Experience Zones</button>
+                <button class="filter-btn" onclick="filterStores('service')">Service Centers</button>
+            </div>
+            <div class="search-stores">
+                <input type="text" placeholder="Search stores by location..." onkeyup="searchStores(this.value)">
+            </div>
+        </div>
+
+        <div class="stores-grid" id="storesGrid">
+            <!-- Stores will be dynamically loaded -->
+        </div>
+    </div>
+</section>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Samsung store data
+    const samsungStores = [
+        {
+            id: 1,
+            name: "Samsung Gangnam Flagship",
+            type: "flagship",
+            region: "seoul",
+            rating: 4.9,
+            reviews: 2847,
+            address: "123 Gangnam-daero, Gangnam-gu, Seoul",
+            hours: "10:00 AM - 10:00 PM",
+            phone: "+82-2-1234-5678",
+            lat: 37.4979,
+            lng: 127.0276,
+            features: ["Latest Products", "Experience Zone", "Repair Center", "VIP Lounge"],
+            badge: "Flagship"
+        },
+        {
+            id: 2,
+            name: "Samsung Myeongdong Experience Store",
+            type: "experience",
+            region: "seoul",
+            rating: 4.8,
+            reviews: 1956,
+            address: "456 Myeongdong-gil, Jung-gu, Seoul",
+            hours: "9:30 AM - 10:30 PM",
+            phone: "+82-2-1234-5679",
+            lat: 37.5602,
+            lng: 126.986,
+            features: ["Hands-on Demo", "Gaming Zone", "Photo Studio", "Tax Free"],
+            badge: "Experience"
+        },
+        {
+            id: 3,
+            name: "Samsung Jamsil Service Center",
+            type: "service",
+            region: "seoul",
+            rating: 4.7,
+            reviews: 892,
+            address: "789 Olympic-ro, Songpa-gu, Seoul",
+            hours: "9:00 AM - 8:00 PM",
+            phone: "+82-2-1234-5680",
+            lat: 37.5111,
+            lng: 127.0982,
+            features: ["Quick Repair", "Warranty Service", "Parts Replacement"],
+            badge: "Service"
+        },
+        {
+            id: 4,
+            name: "Samsung Busan Flagship",
+            type: "flagship",
+            region: "busan",
+            rating: 4.8,
+            reviews: 1345,
+            address: "123 Gwangbok-ro, Jung-gu, Busan",
+            hours: "10:00 AM - 9:00 PM",
+            phone: "+82-51-1234-5678",
+            lat: 35.1017,
+            lng: 129.0406,
+            features: ["Marine View", "Experience Zone", "Repair Center", "Tourist Services"],
+            badge: "Flagship"
+        },
+        {
+            id: 5,
+            name: "Samsung Haeundae Store",
+            type: "experience",
+            region: "busan",
+            rating: 4.6,
+            reviews: 789,
+            address: "456 Haeundae-haebyeon-ro, Haeundae-gu, Busan",
+            hours: "10:00 AM - 10:00 PM",
+            phone: "+82-51-1234-5679",
+            lat: 35.1587,
+            lng: 129.1604,
+            features: ["Beach Front", "Summer Specials", "Waterproof Demo"],
+            badge: "Seasonal"
+        }
+    ];
+
+    // Global variables
+    let map;
+    let markers = [];
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+        loadStores();
+    });
+
+    // Initialize Leaflet map
+    function initMap() {
+        map = L.map('map').setView([36.5, 127.5], 7);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        addStoreMarkers(samsungStores);
+    }
+
+    // Add markers to map
+    function addStoreMarkers(stores) {
+        // Clear existing markers
+        markers.forEach(marker => map.removeLayer(marker));
+        markers = [];
+
+        stores.forEach(store => {
+            const marker = L.marker([store.lat, store.lng])
+                .addTo(map)
+                .bindPopup(`
+                    <div style="min-width: 200px;">
+                        <h3 style="margin: 0 0 10px 0; color: var(--samsung-blue);">${store.name}</h3>
+                        <p style="margin: 0 0 5px 0; font-size: 0.9rem;">${store.address}</p>
+                        <p style="margin: 0 0 5px 0; font-size: 0.8rem; color: var(--gray);">${store.type}</p>
+                        <button onclick="focusOnStore(${store.id})" style="background: var(--samsung-blue); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
+                            View Details
+                        </button>
+                    </div>
+                `);
+            markers.push(marker);
+        });
+
+        // Adjust map bounds to show all markers
+        if (stores.length > 0) {
+            const group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+
+    // Load stores into grid
+    function loadStores(filteredStores = samsungStores) {
+        const storesGrid = document.getElementById('storesGrid');
+        
+        if (storesGrid) {
+            storesGrid.innerHTML = filteredStores.map(store => `
+                <div class="store-card">
+                    <div class="store-badge">${store.badge}</div>
+                    <div class="store-header">
+                        <div class="store-icon">
+                            <i class="fab fa-samsung"></i>
+                        </div>
+                        <div class="store-info">
+                            <h3>${store.name}</h3>
+                            <div class="store-type">${getStoreTypeLabel(store.type)}</div>
+                            <div class="store-rating">
+                                <div class="stars">
+                                    ${generateStars(store.rating)}
+                                </div>
+                                <span>${store.rating} (${store.reviews})</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-details">
+                        <div class="store-address">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${store.address}</span>
+                        </div>
+                        <div class="store-hours">
+                            <i class="fas fa-clock"></i>
+                            <span>${store.hours}</span>
+                        </div>
+                        <div class="store-phone">
+                            <i class="fas fa-phone"></i>
+                            <span>${store.phone}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="store-features">
+                        ${store.features.map(feature => `<span class="store-feature">${feature}</span>`).join('')}
+                    </div>
+                    
+                    <div class="store-actions">
+                        <button class="store-btn primary" onclick="getDirections('${store.address}')">
+                            <i class="fas fa-directions"></i> Directions
+                        </button>
+                        <button class="store-btn secondary" onclick="callStore('${store.phone}')">
+                            <i class="fas fa-phone"></i> Call
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        addStoreMarkers(filteredStores);
+    }
+
+    // Generate stars for rating
+    function generateStars(rating) {
+        const fullStars = Math.floor(rating);
+        const halfStar = rating % 1 >= 0.5;
+        const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+        
+        return '★'.repeat(fullStars) + (halfStar ? '½' : '') + '☆'.repeat(emptyStars);
+    }
+
+    // Get store type label
+    function getStoreTypeLabel(type) {
+        const labels = {
+            'flagship': 'Flagship Store',
+            'experience': 'Experience Zone',
+            'service': 'Service Center'
+        };
+        return labels[type] || type;
+    }
+
+    // Find nearest store using geolocation
+    function findNearestStore() {
+        if (navigator.geolocation) {
+            showToast('Finding nearest Samsung store...');
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    
+                    // Calculate distances and sort
+                    const storesWithDistance = samsungStores.map(store => ({
+                        ...store,
+                        distance: getDistance(userLat, userLng, store.lat, store.lng)
+                    })).sort((a, b) => a.distance - b.distance);
+                    
+                    const nearestStores = storesWithDistance.slice(0, 3);
+                    loadStores(nearestStores);
+                    showToast('Found nearest stores!');
+                    
+                    // Center map on user location
+                    map.setView([userLat, userLng], 12);
+                    
+                    // Add user location marker
+                    L.marker([userLat, userLng])
+                        .addTo(map)
+                        .bindPopup('Your Location')
+                        .openPopup();
+                },
+                (error) => {
+                    showToast('Please enable location services to find nearest stores', 'error');
+                }
+            );
+        } else {
+            showToast('Geolocation is not supported by this browser', 'error');
+        }
+    }
+
+    // Calculate distance between two coordinates (Haversine formula)
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    // Show all stores
+    function showAllStores() {
+        loadStores(samsungStores);
+        showToast('Showing all Samsung stores');
+    }
+
+    // Filter stores by type
+    function filterStores(type) {
+        const filterBtns = document.querySelectorAll('.stores-filter .filter-btn');
+        filterBtns.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        let filteredStores = samsungStores;
+        if (type !== 'all') {
+            filteredStores = samsungStores.filter(store => store.type === type);
+        }
+        
+        loadStores(filteredStores);
+        showToast(`Showing ${type === 'all' ? 'all' : getStoreTypeLabel(type)} stores`);
+    }
+
+    // Search stores
+    function searchStores(query) {
+        if (query.length < 2) {
+            loadStores(samsungStores);
+            return;
+        }
+        
+        const filteredStores = samsungStores.filter(store => 
+            store.name.toLowerCase().includes(query.toLowerCase()) ||
+            store.address.toLowerCase().includes(query.toLowerCase()) ||
+            store.features.some(feature => feature.toLowerCase().includes(query.toLowerCase()))
+        );
+        
+        loadStores(filteredStores);
+    }
+
+    // Focus on specific store
+    function focusOnStore(storeId) {
+        const store = samsungStores.find(s => s.id === storeId);
+        if (store) {
+            map.setView([store.lat, store.lng], 15);
+            // You could also highlight the specific store card
+        }
+    }
+
+    // Get directions (placeholder)
+    function getDirections(address) {
+        showToast(`Getting directions to: ${address}`);
+        // In a real app, this would open Google Maps or Apple Maps
+    }
+
+    // Call store (placeholder)
+    function callStore(phone) {
+        showToast(`Calling: ${phone}`);
+        // In a real app, this would initiate a phone call
+    }
+
+    // Toast notification
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast';
+        toast.classList.add('show');
+        
+        if (type === 'error') {
+            toast.style.background = 'var(--danger)';
+        } else {
+            toast.style.background = 'var(--success)';
+        }
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+</script>
+{% endblock %}

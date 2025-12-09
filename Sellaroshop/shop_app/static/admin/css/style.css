@@ -1,0 +1,28 @@
+/* Basic styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.product-card {
+    transition: transform 0.3s ease;
+    border: 1px solid #e0e0e0;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d47a1, #1976d2);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1976d2, #0d47a1);
+}
+
+.cart-count {
+    font-size: 11px;
+    padding: 2px 6px;
+}

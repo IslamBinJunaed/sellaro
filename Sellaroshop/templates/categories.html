@@ -1,0 +1,990 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shop by Category - Sellaro Marketplace{% endblock %}
+
+{% block content %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    :root {
+        --primary: #3a86ff;
+        --secondary: #8338ec;
+        --accent: #ff006e;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --success: #28a745;
+        --success-light: #d4edda;
+        --success-dark: #155724;
+        --warning: #ffc107;
+        --danger: #dc3545;
+        --shadow: 0 5px 15px rgba(0,0,0,0.1);
+        --transition: all 0.3s ease;
+    }
+
+    /* Cart Feedback Modal Styles */
+    .cart-feedback-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition);
+    }
+
+    .cart-feedback-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .cart-feedback-modal {
+        background: white;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        transform: translateY(30px);
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    .cart-feedback-overlay.show .cart-feedback-modal {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .feedback-header {
+        background: linear-gradient(135deg, #27ae60, #219653);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+    }
+
+    .feedback-checkmark {
+        width: 70px;
+        height: 70px;
+        background: white;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: checkmarkPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .feedback-checkmark i {
+        font-size: 35px;
+        color: #27ae60;
+    }
+
+    .feedback-header h3 {
+        font-size: 28px;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+
+    .feedback-header p {
+        font-size: 16px;
+        opacity: 0.9;
+    }
+
+    .feedback-content {
+        padding: 30px;
+    }
+
+    .feedback-product {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        border: 2px solid #e8f5e9;
+    }
+
+    .feedback-product-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 3px solid #27ae60;
+        padding: 3px;
+        background: white;
+    }
+
+    .feedback-product-details h4 {
+        margin: 0 0 5px 0;
+        font-size: 18px;
+        color: var(--dark);
+    }
+
+    .feedback-price {
+        font-size: 20px;
+        font-weight: 700;
+        color: #27ae60;
+        margin: 5px 0;
+    }
+
+    .feedback-quantity {
+        font-size: 14px;
+        color: #666;
+        background: #e8f5e9;
+        padding: 4px 12px;
+        border-radius: 20px;
+        display: inline-block;
+    }
+
+    .feedback-summary {
+        background: #e8f5e9;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border-left: 4px solid #27ae60;
+    }
+
+    .feedback-summary p {
+        margin: 5px 0;
+        color: #155724;
+        font-size: 15px;
+    }
+
+    .feedback-summary strong {
+        color: #219653;
+    }
+
+    .feedback-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .feedback-btn {
+        padding: 16px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        text-decoration: none;
+        text-align: center;
+    }
+
+    .btn-view-cart {
+        background: #27ae60;
+        color: white;
+    }
+
+    .btn-view-cart:hover {
+        background: #219653;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-continue {
+        background: #f8f9fa;
+        color: var(--dark);
+        border: 2px solid #dee2e6;
+    }
+
+    .btn-continue:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+
+    @keyframes checkmarkPop {
+        0% {
+            transform: scale(0);
+        }
+        70% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    /* Main Styles */
+    body {
+        background-color: #ffffff;
+        color: var(--dark);
+        line-height: 1.6;
+        overflow-x: hidden;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+
+    /* Header Section */
+    .page-header {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 100px 0 60px;
+        text-align: center;
+        margin-bottom: 60px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.1;
+    }
+
+    .page-header-content {
+        position: relative;
+        z-index: 2;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .page-header h1 {
+        font-size: 3.5rem;
+        margin-bottom: 20px;
+        font-weight: 800;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .page-header p {
+        font-size: 1.3rem;
+        opacity: 0.9;
+        margin-bottom: 30px;
+    }
+
+    .breadcrumb {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+
+    .breadcrumb a {
+        color: white;
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .breadcrumb a:hover {
+        color: var(--accent);
+    }
+
+    /* Categories Grid */
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        margin-bottom: 100px;
+    }
+
+    .category-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+        position: relative;
+        cursor: pointer;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .category-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+    }
+
+    .category-image {
+        height: 200px;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .category-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: var(--transition);
+    }
+
+    .category-card:hover .category-image img {
+        transform: scale(1.1);
+    }
+
+    .category-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: var(--accent);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        z-index: 2;
+        box-shadow: 0 3px 10px rgba(255,0,110,0.3);
+    }
+
+    .category-content {
+        padding: 30px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .category-icon {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .category-content h3 {
+        font-size: 1.6rem;
+        margin-bottom: 15px;
+        color: var(--dark);
+    }
+
+    .category-description {
+        color: var(--gray);
+        margin-bottom: 25px;
+        line-height: 1.6;
+        flex-grow: 1;
+    }
+
+    .category-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .product-count {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .category-btn {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 12px 30px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: var(--transition);
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .category-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(58,134,255,0.3);
+    }
+
+    /* Toast Styles */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        background: var(--success);
+        color: white;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        z-index: 9999;
+        transform: translateX(150%);
+        transition: transform 0.3s ease;
+    }
+    
+    .toast.show {
+        transform: translateX(0);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .page-header h1 {
+            font-size: 3rem;
+        }
+        
+        .categories-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 80px 0 50px;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+        }
+
+        .categories-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feedback-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .feedback-product {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-header {
+            padding: 60px 0 40px;
+        }
+        
+        .page-header h1 {
+            font-size: 2rem;
+        }
+
+        .category-content {
+            padding: 20px;
+        }
+
+        .category-content h3 {
+            font-size: 1.4rem;
+        }
+    }
+</style>
+
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="page-header-content">
+        <h1>Shop by Category</h1>
+        <p>Browse our wide selection of product categories and discover amazing products</p>
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">Home</a>
+            <span>/</span>
+            <span>Categories</span>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="section">
+    <div class="container">
+        <div class="categories-grid">
+            {% for category in categories %}
+            <div class="category-card">
+                <div class="category-image">
+                    {% if category.image %}
+                    <img src="{{ category.image.url }}" alt="{{ category.name }}">
+                    {% else %}
+                    <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="{{ category.name }}">
+                    {% endif %}
+                    <div class="category-badge">Popular</div>
+                </div>
+                <div class="category-content">
+                    <div class="category-icon">
+                        {% if category.name == "Fashion" %}
+                        <i class="fas fa-tshirt"></i>
+                        {% elif category.name == "Electronics" %}
+                        <i class="fas fa-laptop"></i>
+                        {% elif category.name == "Home & Garden" %}
+                        <i class="fas fa-home"></i>
+                        {% elif category.name == "Food & Grocery" %}
+                        <i class="fas fa-utensils"></i>
+                        {% elif category.name == "Health & Beauty" %}
+                        <i class="fas fa-heart"></i>
+                        {% elif category.name == "Toys & Games" %}
+                        <i class="fas fa-gamepad"></i>
+                        {% else %}
+                        <i class="fas fa-shopping-bag"></i>
+                        {% endif %}
+                    </div>
+                    <h3>{{ category.name }}</h3>
+                    <p class="category-description">
+                        {% if category.name == "Fashion" %}
+                        Explore the latest trends in clothing, shoes, and accessories for every occasion.
+                        {% elif category.name == "Electronics" %}
+                        Discover cutting-edge technology with phones, computers, and smart devices.
+                        {% elif category.name == "Home & Garden" %}
+                        Find everything for your home, from furniture to decor and gardening tools.
+                        {% elif category.name == "Food & Grocery" %}
+                        Fresh produce, pantry essentials, and gourmet foods delivered to your door.
+                        {% elif category.name == "Health & Beauty" %}
+                        Premium cosmetics, skincare products, and wellness essentials for your self-care.
+                        {% elif category.name == "Toys & Games" %}
+                        Fun and educational toys, games, and entertainment for the whole family.
+                        {% else %}
+                        Discover amazing products in this category with great deals and offers.
+                        {% endif %}
+                    </p>
+                    <div class="category-stats">
+                        <div class="product-count">
+                            {{ category.products.count|default:"100+" }} Products
+                        </div>
+                        <div class="trending">
+                            <span style="color: #ff006e;">★ Trending</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'category_products' category.slug %}" class="category-btn">
+                        <i class="fas fa-arrow-right"></i> Explore {{ category.name }}
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <!-- Sample categories if no database categories -->
+            <div class="category-card">
+                <div class="category-image">
+                    <img src="https://images.unsplash.com/photo-1445205170230-053b83016050?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Fashion">
+                    <div class="category-badge">Popular</div>
+                </div>
+                <div class="category-content">
+                    <div class="category-icon">
+                        <i class="fas fa-tshirt"></i>
+                    </div>
+                    <h3>Fashion</h3>
+                    <p class="category-description">
+                        Explore the latest trends in clothing, shoes, and accessories for every occasion.
+                    </p>
+                    <div class="category-stats">
+                        <div class="product-count">150+ Products</div>
+                        <div class="trending">
+                            <span style="color: #ff006e;">★ Trending</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'category_products' 'fashion' %}" class="category-btn">
+                        <i class="fas fa-arrow-right"></i> Explore Fashion
+                    </a>
+                </div>
+            </div>
+
+            <div class="category-card">
+                <div class="category-image">
+                    <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Electronics">
+                    <div class="category-badge">New</div>
+                </div>
+                <div class="category-content">
+                    <div class="category-icon">
+                        <i class="fas fa-laptop"></i>
+                    </div>
+                    <h3>Electronics</h3>
+                    <p class="category-description">
+                        Discover cutting-edge technology with phones, computers, and smart devices.
+                    </p>
+                    <div class="category-stats">
+                        <div class="product-count">200+ Products</div>
+                        <div class="trending">
+                            <span style="color: #ff006e;">★ Trending</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'category_products' 'electronics' %}" class="category-btn">
+                        <i class="fas fa-arrow-right"></i> Explore Electronics
+                    </a>
+                </div>
+            </div>
+
+            <div class="category-card">
+                <div class="category-image">
+                    <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Home & Garden">
+                    <div class="category-badge">Best Seller</div>
+                </div>
+                <div class="category-content">
+                    <div class="category-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3>Home & Garden</h3>
+                    <p class="category-description">
+                        Find everything for your home, from furniture to decor and gardening tools.
+                    </p>
+                    <div class="category-stats">
+                        <div class="product-count">120+ Products</div>
+                        <div class="trending">
+                            <span style="color: #ff006e;">★ Trending</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'category_products' 'home-garden' %}" class="category-btn">
+                        <i class="fas fa-arrow-right"></i> Explore Home & Garden
+                    </a>
+                </div>
+            </div>
+
+            <div class="category-card">
+                <div class="category-image">
+                    <img src="https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Food & Grocery">
+                </div>
+                <div class="category-content">
+                    <div class="category-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <h3>Food & Grocery</h3>
+                    <p class="category-description">
+                        Fresh produce, pantry essentials, and gourmet foods delivered to your door.
+                    </p>
+                    <div class="category-stats">
+                        <div class="product-count">80+ Products</div>
+                        <div class="trending">
+                            <span style="color: #ff006e;">★ Trending</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'category_products' 'food-grocery' %}" class="category-btn">
+                        <i class="fas fa-arrow-right"></i> Explore Food & Grocery
+                    </a>
+                </div>
+            </div>
+
+            <div class="category-card">
+                <div class="category-image">
+                    <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Health & Beauty">
+                    <div class="category-badge">Popular</div>
+                </div>
+                <div class="category-content">
+                    <div class="category-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3>Health & Beauty</h3>
+                    <p class="category-description">
+                        Premium cosmetics, skincare products, and wellness essentials for your self-care.
+                    </p>
+                    <div class="category-stats">
+                        <div class="product-count">90+ Products</div>
+                        <div class="trending">
+                            <span style="color: #ff006e;">★ Trending</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'category_products' 'health-beauty' %}" class="category-btn">
+                        <i class="fas fa-arrow-right"></i> Explore Health & Beauty
+                    </a>
+                </div>
+            </div>
+
+            <div class="category-card">
+                <div class="category-image">
+                    <img src="https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Toys & Games">
+                </div>
+                <div class="category-content">
+                    <div class="category-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3>Toys & Games</h3>
+                    <p class="category-description">
+                        Fun and educational toys, games, and entertainment for the whole family.
+                    </p>
+                    <div class="category-stats">
+                        <div class="product-count">70+ Products</div>
+                        <div class="trending">
+                            <span style="color: #ff006e;">★ Trending</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'category_products' 'toys-games' %}" class="category-btn">
+                        <i class="fas fa-arrow-right"></i> Explore Toys & Games
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<script>
+    // ================= GLOBAL VARIABLES =================
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+    // ================= PAGE INITIALIZATION =================
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartCount();
+        setupCartFeedbackModal();
+    });
+
+    // ================= CART FEEDBACK FUNCTIONS =================
+    function setupCartFeedbackModal() {
+        const overlay = document.getElementById('cartFeedbackOverlay');
+        const continueBtn = document.getElementById('continueShoppingBtn');
+        
+        if (overlay) {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    hideCartFeedback();
+                }
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && overlay.classList.contains('show')) {
+                    hideCartFeedback();
+                }
+            });
+        }
+        
+        if (continueBtn) {
+            continueBtn.addEventListener('click', hideCartFeedback);
+        }
+    }
+
+    function showCartFeedback(productName, price, image, productId) {
+        const productDetails = document.getElementById('feedbackProductDetails');
+        if (productDetails) {
+            productDetails.innerHTML = `
+                <img src="${image}" alt="${productName}" class="feedback-product-image">
+                <div class="feedback-product-details">
+                    <h4>${productName}</h4>
+                    <div class="feedback-price">$${price}</div>
+                    <span class="feedback-quantity">Quantity: 1</span>
+                </div>
+            `;
+        }
+        
+        const overlay = document.getElementById('cartFeedbackOverlay');
+        if (overlay) {
+            overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            
+            setTimeout(() => {
+                if (overlay.classList.contains('show')) {
+                    hideCartFeedback();
+                }
+            }, 5000);
+        }
+    }
+
+    function hideCartFeedback() {
+        const overlay = document.getElementById('cartFeedbackOverlay');
+        if (overlay) {
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function handleViewCart() {
+        hideCartFeedback();
+        showToast('Cart page is under development! View your cart items in the cart icon.', 'info');
+    }
+
+    // ================= CART FUNCTIONS =================
+    async function addToCartToServer(productId, productName, price, image, button) {
+        try {
+            const formData = new FormData();
+            formData.append('product_id', productId);
+            formData.append('quantity', 1);
+            
+            const response = await fetch('/add-to-cart/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Visual feedback on button
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-check"></i> Added to Cart';
+                    button.classList.add('added');
+                    
+                    setTimeout(() => {
+                        button.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                        button.classList.remove('added');
+                    }, 3000);
+                }
+                
+                // Highlight product card
+                const productCard = button.closest('.product-card');
+                if (productCard) {
+                    productCard.classList.add('added-to-cart');
+                    setTimeout(() => {
+                        productCard.classList.remove('added-to-cart');
+                    }, 1000);
+                }
+                
+                // Update cart count
+                updateCartCountFromServer();
+                
+                // Show enhanced cart feedback modal
+                showCartFeedback(productName, price, image, productId);
+                
+                // Also show toast notification
+                showToast(`${productName} added to cart!`, 'success');
+            } else {
+                showToast(data.error || 'Failed to add to cart', 'error');
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            // Fallback to local cart
+            addToCartLocal(productName, price, image, button);
+        }
+    }
+
+    function addToCartLocal(productName, price, image, button) {
+        const existingItem = cart.find(item => item.name === productName);
+        
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({
+                name: productName,
+                price: price,
+                quantity: 1
+            });
+        }
+        
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+        
+        if (button) {
+            button.innerHTML = '<i class="fas fa-check"></i> Added to Cart';
+            button.classList.add('added');
+            
+            setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                button.classList.remove('added');
+            }, 3000);
+        }
+        
+        const productCard = button.closest('.product-card');
+        if (productCard) {
+            productCard.classList.add('added-to-cart');
+            setTimeout(() => {
+                productCard.classList.remove('added-to-cart');
+            }, 1000);
+        }
+        
+        showCartFeedback(productName, price, image);
+        showToast(`${productName} added to cart!`, 'success');
+    }
+
+    async function updateCartCountFromServer() {
+        try {
+            const response = await fetch('/cart-count/');
+            if (response.ok) {
+                const data = await response.json();
+                updateCartDisplay(data.count || 0);
+            }
+        } catch (error) {
+            updateCartCount();
+        }
+    }
+
+    function updateCartCount() {
+        const count = cart.reduce((total, item) => total + item.quantity, 0);
+        updateCartDisplay(count);
+    }
+
+    function updateCartDisplay(count) {
+        const cartBadge = document.getElementById('cart-count-badge');
+        if (cartBadge) {
+            cartBadge.textContent = count;
+            cartBadge.style.display = count > 0 ? 'flex' : 'none';
+        }
+        
+        const cartCountElements = document.querySelectorAll('.cart-count');
+        cartCountElements.forEach(el => {
+            el.textContent = count;
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // ================= UTILITY FUNCTIONS =================
+    function showToast(message, type = 'success') {
+        let toast = document.getElementById('toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast';
+            toast.className = 'toast';
+            document.body.appendChild(toast);
+        }
+        
+        const icon = type === 'error' ? 'fas fa-exclamation-circle' : 
+                    type === 'warning' ? 'fas fa-exclamation-triangle' : 
+                    'fas fa-check-circle';
+        
+        toast.innerHTML = `<i class="${icon}"></i> ${message}`;
+        toast.className = 'toast';
+        
+        if (type === 'error') {
+            toast.style.background = 'var(--danger)';
+        } else if (type === 'warning') {
+            toast.style.background = 'var(--warning)';
+            toast.style.color = 'var(--dark)';
+        } else {
+            toast.style.background = 'var(--success)';
+        }
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+</script>
+{% endblock %}

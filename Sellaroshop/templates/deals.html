@@ -1,0 +1,958 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}deals - Sellaro{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* Your CSS remains the same */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #3a86ff;
+            --secondary: #8338ec;
+            --accent: #ff006e;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --shadow: 0 5px 15px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        /* Back Button */
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--primary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+
+        .back-button:hover {
+            background: white;
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Deals Hero Section */
+        .deals-hero {
+            background: linear-gradient(135deg, var(--danger), var(--accent));
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .deals-hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .deals-hero p {
+            font-size: 1.3rem;
+            max-width: 600px;
+            margin: 0 auto;
+            opacity: 0.9;
+        }
+
+        .deal-countdown {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+            display: inline-block;
+        }
+
+        .countdown-timer {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .countdown-item {
+            background: white;
+            color: var(--danger);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: 700;
+            min-width: 60px;
+        }
+
+        .countdown-number {
+            font-size: 1.5rem;
+            display: block;
+        }
+
+        .countdown-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 60px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-title h2 {
+            font-size: 2.8rem;
+            color: var(--dark);
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            border-radius: 2px;
+        }
+
+        .section-title p {
+            color: var(--gray);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Deal Categories */
+        .deal-categories {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 12px 25px;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-btn.active, .category-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            width: 100%;
+        }
+
+        /* Product Cards */
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--danger);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        .discount-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--accent);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            z-index: 2;
+        }
+
+        .product-image {
+            height: 220px;
+            background: linear-gradient(135deg, var(--light), #e9ecef);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-info h3 {
+            margin-bottom: 12px;
+            font-size: 1.3rem;
+            color: var(--dark);
+        }
+
+        .product-info p {
+            color: var(--gray);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .old-price {
+            font-size: 1rem;
+            color: var(--gray);
+            text-decoration: line-through;
+        }
+
+        .discount-price {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .stars {
+            color: var(--warning);
+        }
+
+        .rating-count {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .buy-now {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            width: 100%;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+
+        .buy-now:hover {
+            background: #e0005e;
+            transform: translateY(-2px);
+        }
+
+        /* Flash Sales Section */
+        .flash-sales {
+            background: linear-gradient(135deg, var(--light), #f1f3f5);
+        }
+
+        .flash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .flash-timer {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: var(--danger);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .timer-numbers {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        /* Featured Deals */
+        .featured-deals {
+            background: white;
+        }
+
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .featured-deal {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 15px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .featured-deal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .featured-deal:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .featured-deal h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .featured-deal p {
+            margin-bottom: 20px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+
+        .featured-discount {
+            background: var(--accent);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: inline-block;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 3000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .deals-hero {
+                padding: 60px 0;
+            }
+            
+            .deals-hero h1 {
+                font-size: 3rem;
+            }
+            
+            .section {
+                padding: 50px 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .deals-hero {
+                padding: 50px 0;
+            }
+
+            .deals-hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .deals-hero p {
+                font-size: 1.1rem;
+            }
+
+            .section-title h2 {
+                font-size: 2.2rem;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .deal-categories {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .category-btn {
+                width: 200px;
+                justify-content: center;
+            }
+
+            .flash-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .featured-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .countdown-timer {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .deals-hero {
+                padding: 40px 0;
+            }
+            
+            .deals-hero h1 {
+                font-size: 2rem;
+            }
+
+            .section-title h2 {
+                font-size: 1.8rem;
+            }
+
+            .product-price {
+                font-size: 1.3rem;
+            }
+
+            .countdown-item {
+                min-width: 50px;
+                padding: 8px 12px;
+            }
+
+            .countdown-number {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+    <!-- Back Button -->
+  
+    <!-- Deals Hero Section -->
+    <section class="deals-hero">
+        <div class="container">
+            <h1>Hot Deals & Discounts</h1>
+            <p>Limited time offers with massive discounts. Shop now before they're gone!</p>
+            <div class="deal-countdown">
+                <h3>Flash Sale Ends In:</h3>
+                <div class="countdown-timer">
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="countdown-hours">24</span>
+                        <span class="countdown-label">HOURS</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="countdown-minutes">59</span>
+                        <span class="countdown-label">MINS</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="countdown-seconds">59</span>
+                        <span class="countdown-label">SECS</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Flash Sales Section -->
+    <section class="section flash-sales">
+        <div class="container">
+            <div class="flash-header">
+                <div class="section-title" style="text-align: left; margin-bottom: 0;">
+                    <h2>Flash Sales</h2>
+                    <p>Limited time offers with huge discounts</p>
+                </div>
+                <div class="flash-timer">
+                    <i class="fas fa-bolt"></i>
+                    <span>Ends in:</span>
+                    <span class="timer-numbers" id="flash-timer">23:59:59</span>
+                </div>
+            </div>
+            <div class="products-grid" id="flashSalesProducts">
+                <!-- Flash sale products will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- All Deals Section -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <h2>All Hot Deals</h2>
+                <p>Browse through all our amazing deals and discounts</p>
+            </div>
+
+            <div class="deal-categories">
+                <button class="category-btn active" onclick="filterDeals('all')">
+                    <i class="fas fa-fire"></i> All Deals
+                </button>
+                <button class="category-btn" onclick="filterDeals('electronics')">
+                    <i class="fas fa-laptop"></i> Electronics
+                </button>
+                <button class="category-btn" onclick="filterDeals('fashion')">
+                    <i class="fas fa-tshirt"></i> Fashion
+                </button>
+                <button class="category-btn" onclick="filterDeals('home')">
+                    <i class="fas fa-home"></i> Home & Garden
+                </button>
+                <button class="category-btn" onclick="filterDeals('beauty')">
+                    <i class="fas fa-heart"></i> Beauty
+                </button>
+            </div>
+
+            <div class="products-grid" id="allDealsProducts">
+                <!-- All deals products will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Deals Section -->
+    <section class="section featured-deals">
+        <div class="container">
+            <div class="section-title">
+                <h2>Featured Deals</h2>
+                <p>Special offers you don't want to miss</p>
+            </div>
+
+            <div class="featured-grid">
+                <div class="featured-deal" onclick="showCategoryDeals('electronics')">
+                    <h3>Electronics Mega Sale</h3>
+                    <p>Up to 60% off on smartphones, laptops, and gadgets</p>
+                    <div class="featured-discount">60% OFF</div>
+                </div>
+                <div class="featured-deal" onclick="showCategoryDeals('fashion')">
+                    <h3>Fashion Clearance</h3>
+                    <p>Summer collection with massive discounts</p>
+                    <div class="featured-discount">70% OFF</div>
+                </div>
+                <div class="featured-deal" onclick="showCategoryDeals('home')">
+                    <h3>Home Essentials</h3>
+                    <p>Furniture and decor at unbelievable prices</p>
+                    <div class="featured-discount">50% OFF</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Sample deals data
+        const dealsProducts = [
+            { 
+                id: 1,
+                name: "Wireless Headphones", 
+                price: 79.99, 
+                oldPrice: 199.99, 
+                rating: 4.9, 
+                reviews: 1567, 
+                image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", 
+                badge: "Flash Sale",
+                discount: 60,
+                category: "electronics",
+                isFlash: true
+            },
+            { 
+                id: 2,
+                name: "Smart Watch Series 5", 
+                price: 199.99, 
+                oldPrice: 399.99, 
+                rating: 4.8, 
+                reviews: 2890, 
+                image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", 
+                badge: "50% OFF",
+                discount: 50,
+                category: "electronics",
+                isFlash: true
+            },
+            { 
+                id: 3,
+                name: "Designer Running Shoes", 
+                price: 59.99, 
+                oldPrice: 149.99, 
+                rating: 4.6, 
+                reviews: 892, 
+                image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", 
+                badge: "60% OFF",
+                discount: 60,
+                category: "fashion",
+                isFlash: false
+            },
+            { 
+                id: 4,
+                name: "Gaming Laptop Pro", 
+                price: 899.99, 
+                oldPrice: 1499.99, 
+                rating: 4.7, 
+                reviews: 567, 
+                image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", 
+                badge: "40% OFF",
+                discount: 40,
+                category: "electronics",
+                isFlash: false
+            },
+            { 
+                id: 5,
+                name: "Premium Handbag", 
+                price: 149.99, 
+                oldPrice: 299.99, 
+                rating: 4.5, 
+                reviews: 345, 
+                image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", 
+                badge: "50% OFF",
+                discount: 50,
+                category: "fashion",
+                isFlash: true
+            },
+            { 
+                id: 6,
+                name: "Smartphone X", 
+                price: 499.99, 
+                oldPrice: 799.99, 
+                rating: 4.8, 
+                reviews: 2314, 
+                image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", 
+                badge: "38% OFF",
+                discount: 38,
+                category: "electronics",
+                isFlash: false
+            },
+            { 
+                id: 7,
+                name: "Home Speaker System", 
+                price: 129.99, 
+                oldPrice: 249.99, 
+                rating: 4.4, 
+                reviews: 678, 
+                image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", 
+                badge: "48% OFF",
+                discount: 48,
+                category: "home",
+                isFlash: true
+            },
+            { 
+                id: 8,
+                name: "Beauty Skincare Set", 
+                price: 39.99, 
+                oldPrice: 79.99, 
+                rating: 4.6, 
+                reviews: 1234, 
+                image: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", 
+                badge: "50% OFF",
+                discount: 50,
+                category: "beauty",
+                isFlash: false
+            }
+        ];
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFlashSales();
+            loadAllDeals();
+            startCountdown();
+
+            // Add event listener for buy-now buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('buy-now') || 
+                    e.target.closest('.buy-now')) {
+                    const button = e.target.classList.contains('buy-now') ? e.target : e.target.closest('.buy-now');
+                    const productCard = button.closest('.product-card');
+                    const productName = productCard.querySelector('h3').textContent;
+                    const priceText = productCard.querySelector('.discount-price').textContent;
+                    const price = parseFloat(priceText.replace('$', ''));
+                    
+                    buyNow(productName, price);
+                }
+            });
+        });
+
+        // Load flash sales products
+        function loadFlashSales() {
+            const flashGrid = document.getElementById('flashSalesProducts');
+            const flashProducts = dealsProducts.filter(product => product.isFlash);
+            
+            if (flashGrid) {
+                flashGrid.innerHTML = flashProducts.map(product => `
+                    <div class="product-card" data-category="${product.category}">
+                        <div class="product-badge">${product.badge}</div>
+                        <div class="discount-badge">${product.discount}% OFF</div>
+                        <div class="product-image">
+                            <img src="${product.image}" alt="${product.name}" loading="lazy">
+                        </div>
+                        <div class="product-info">
+                            <h3>${product.name}</h3>
+                            <p>Limited time offer! Get this amazing ${product.name} at an unbelievable price.</p>
+                            <div class="product-price">
+                                <span class="discount-price">$${product.price.toFixed(2)}</span>
+                                <span class="old-price">$${product.oldPrice.toFixed(2)}</span>
+                            </div>
+                            <div class="product-rating">
+                                <div class="stars">
+                                    ${generateStars(product.rating)}
+                                </div>
+                                <span class="rating-count">${product.rating} (${product.reviews})</span>
+                            </div>
+                            <button class="buy-now" data-product-id="${product.id}">
+                                <i class="fas fa-bolt"></i> Buy Now
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Load all deals products
+        function loadAllDeals(filter = 'all') {
+            const dealsGrid = document.getElementById('allDealsProducts');
+            let filteredProducts = dealsProducts;
+            
+            if (filter !== 'all') {
+                filteredProducts = dealsProducts.filter(product => product.category === filter);
+            }
+            
+            if (dealsGrid) {
+                dealsGrid.innerHTML = filteredProducts.map(product => `
+                    <div class="product-card" data-category="${product.category}">
+                        <div class="product-badge">${product.badge}</div>
+                        <div class="discount-badge">${product.discount}% OFF</div>
+                        <div class="product-image">
+                            <img src="${product.image}" alt="${product.name}" loading="lazy">
+                        </div>
+                        <div class="product-info">
+                            <h3>${product.name}</h3>
+                            <p>Amazing deal on ${product.name}. Save ${product.discount}% for limited time!</p>
+                            <div class="product-price">
+                                <span class="discount-price">$${product.price.toFixed(2)}</span>
+                                <span class="old-price">$${product.oldPrice.toFixed(2)}</span>
+                            </div>
+                            <div class="product-rating">
+                                <div class="stars">
+                                    ${generateStars(product.rating)}
+                                </div>
+                                <span class="rating-count">${product.rating} (${product.reviews})</span>
+                            </div>
+                            <button class="buy-now" data-product-id="${product.id}">
+                                <i class="fas fa-bolt"></i> Buy Now
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Filter deals by category
+        function filterDeals(category) {
+            const categoryBtns = document.querySelectorAll('.category-btn');
+            categoryBtns.forEach(btn => btn.classList.remove('active'));
+            // use event.currentTarget if available; fallback to global event
+            const trigger = (typeof event !== 'undefined' && event.target) ? event.target : null;
+            if (trigger) {
+                trigger.classList.add('active');
+            }
+            
+            loadAllDeals(category);
+            showToast(`Showing ${category === 'all' ? 'all' : category} deals`);
+        }
+
+        // Show category deals
+        function showCategoryDeals(category) {
+            filterDeals(category);
+            document.querySelector('.section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Countdown timer
+        function startCountdown() {
+            let hours = 24;
+            let minutes = 59;
+            let seconds = 59;
+
+            setInterval(() => {
+                seconds--;
+                if (seconds < 0) {
+                    seconds = 59;
+                    minutes--;
+                    if (minutes < 0) {
+                        minutes = 59;
+                        hours--;
+                        if (hours < 0) {
+                            hours = 24;
+                        }
+                    }
+                }
+
+                const hoursEl = document.getElementById('countdown-hours');
+                const minutesEl = document.getElementById('countdown-minutes');
+                const secondsEl = document.getElementById('countdown-seconds');
+                const flashTimerEl = document.getElementById('flash-timer');
+
+                if (hoursEl) hoursEl.textContent = hours.toString().padStart(2, '0');
+                if (minutesEl) minutesEl.textContent = minutes.toString().padStart(2, '0');
+                if (secondsEl) secondsEl.textContent = seconds.toString().padStart(2, '0');
+
+                if (flashTimerEl) {
+                    flashTimerEl.textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        // Generate stars
+        function generateStars(rating) {
+            const fullStars = Math.floor(rating);
+            const halfStar = rating % 1 >= 0.5;
+            const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+            
+            return '★'.repeat(fullStars) + (halfStar ? '½' : '') + '☆'.repeat(emptyStars);
+        }
+
+        // Buy now function
+        function buyNow(productName, price) {
+            showToast(`Proceeding to checkout for ${productName}`);
+            // In a real app, this would redirect to checkout or open modal
+        }
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.textContent = message;
+            toast.className = 'toast';
+            toast.classList.add('show');
+            
+            if (type === 'error') {
+                toast.style.background = 'var(--danger)';
+            } else {
+                toast.style.background = 'var(--success)';
+            }
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+{% endblock %}

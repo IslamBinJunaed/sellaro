@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="max-width: 400px; margin: 100px auto; padding: 30px; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+    <h2 class="text-center mb-4">Sign Up</h2>
+    
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <form method="POST" action="{% url 'signup' %}">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="id_username" class="form-label">Username</label>
+            <input type="text" name="username" maxlength="150" class="form-control" id="id_username" 
+                   value="{% if form.username.value %}{{ form.username.value }}{% endif %}" 
+                   required autofocus>
+            <small class="form-text text-muted">
+                Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+            </small>
+        </div>
+        
+        <div class="mb-3">
+            <label for="id_password1" class="form-label">Password</label>
+            <input type="password" name="password1" class="form-control" id="id_password1" required>
+            <small class="form-text text-muted">
+                <ul class="mb-0 ps-3" style="font-size: 0.85rem;">
+                    <li>Your password can't be too similar to your other personal information.</li>
+                    <li>Your password must contain at least 8 characters.</li>
+                    <li>Your password can't be a commonly used password.</li>
+                    <li>Your password can't be entirely numeric.</li>
+                </ul>
+            </small>
+        </div>
+        
+        <div class="mb-3">
+            <label for="id_password2" class="form-label">Password confirmation</label>
+            <input type="password" name="password2" class="form-control" id="id_password2" required>
+            <small class="form-text text-muted">
+                Enter the same password as before, for verification.
+            </small>
+        </div>
+        
+        <button type="submit" class="btn btn-primary w-100" style="background: linear-gradient(135deg, #3a86ff, #8338ec); border: none; padding: 12px; border-radius: 8px; font-weight: 600;">
+            Sign Up
+        </button>
+    </form>
+    
+    <div class="mt-4 text-center">
+        <p class="mb-2">Already have an account? <a href="{% url 'login' %}" style="color: #3a86ff; text-decoration: none; font-weight: 600;">Login here</a></p>
+        <p class="mb-0"><a href="{% url 'home' %}" style="color: #6c757d; text-decoration: none;">← Back to Home</a></p>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .form-control {
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #3a86ff;
+        box-shadow: 0 0 0 0.2rem rgba(58, 134, 255, 0.25);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 8px;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+        margin-bottom: 20px;
+    }
+    
+    .alert-danger {
+        background-color: #ffebee;
+        color: #dc3545;
+    }
+    
+    a:hover {
+        text-decoration: underline;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(58, 134, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Real-time password matching
+    const password1 = document.getElementById('id_password1');
+    const password2 = document.getElementById('id_password2');
+    const form = document.querySelector('form');
+    
+    function validatePasswords() {
+        if (password1.value && password2.value) {
+            if (password1.value !== password2.value) {
+                password2.style.borderColor = '#dc3545';
+                password2.style.boxShadow = '0 0 0 0.2rem rgba(220,53,69,0.25)';
+                return false;
+            } else {
+                password2.style.borderColor = '#28a745';
+                password2.style.boxShadow = '0 0 0 0.2rem rgba(40,167,69,0.25)';
+                return true;
+            }
+        }
+        return true;
+    }
+    
+    if (password1 && password2) {
+        password1.addEventListener('input', validatePasswords);
+        password2.addEventListener('input', validatePasswords);
+    }
+    
+    // Form submission validation
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!validatePasswords()) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                return false;
+            }
+            
+            if (password1.value.length < 8) {
+                e.preventDefault();
+                alert('Password must be at least 8 characters long!');
+                return false;
+            }
+            
+            return true;
+        });
+    }
+});
+</script>
+{% endblock %}
